@@ -2,7 +2,7 @@
     const express = require("express");
     const { v4: uuidv4 } = require("uuid");
     const fs = require("fs");
-    const notes = require("./db.json");
+    const notes = require("./db/db.json");
     const path = require("path");
 
     const app = express();
@@ -11,9 +11,7 @@
     app.use(express.urlencoded({ extended: true}));
     app.use(express.json());
 
-// going to put routes in the main file for now, may move later
-    // require("./routes/apiRoutes")(app);
-    // require("./routes/htmlRoutes")(app);
+    app.use(express.static("assets"));
 
 // api routes
     // retrieves the currently stored notes from the db.json file
@@ -35,7 +33,7 @@
         // pushes new note to the notes array locally, will need to be written to the db.json file later for perminant storage
         notes.push(note);
 
-        fs.writeFile(path.join(__dirname, "db.json"), JSON.stringify(notes), (err) => {
+        fs.writeFile("./db/db.json", JSON.stringify(notes), (err) => {
             if (err) {
                 return res.json({error: "Your note could not be saved."});
             }
@@ -45,26 +43,27 @@
     });
 
     // deletes the selected note form the db.json file, and returns the new db.json file
-    app.delete("/api/notes/", function(req, res) {
-        // need to figure out have to remove notes by id
-        let currentNotes = fs.readFileSync(path.join(__dirpath, "db.json"), notes, (err) => {
+    app.delete("/api/notes/:id", function(req, res) {
+
+        var currentNotes = JSON.parse(fs.readFileSync("./db/db.json", (err, data) => {
             if (err) {
-                return res.json({error: "An error occured, you note could not be deleted."})
+                console.log(err);
             }
-        });
+        }));
 
         for (let i = 0; i < currentNotes.length; i++) {
-            if (currentNotes.id === req.params.id) {
+            if (currentNotes[i].id === req.params.id) {
+
                 currentNotes.splice(i, 1);
 
-                fs.writeFile(path.join(__dirname, "db.json"), JSON.stringify(notes), (err) => {
+                fs.writeFile("./db/db.json", JSON.stringify(currentNotes), (err) => {
                     if (err) {
-                        return res.json({error: "Your note could not be saved."});
+                        return res.json({error: "Your note could not be deleted."});
                     }
         
-                    return res.json(note);
+                    return res.json(currentNotes);
                 });
-            };
+            }
         }
     });
 
